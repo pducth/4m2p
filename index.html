@@ -5,81 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chia tiền nhóm</title>
 <style>
-  :root{--bg:#f3f4fb;--card:#fff;--text:#1b2033;--muted:#7a8199;--pri:#6366f1;--pri2:#8b5cf6;--ok:#10b981;--okbg:#d1fae5;--bad:#ef4444;--badbg:#fee2e2;--line:#eceef6;--shadow:0 4px 18px rgba(60,70,130,.08)}
-  @media (prefers-color-scheme:dark){:root{--bg:#0e1118;--card:#171b26;--text:#eaedf6;--muted:#8b93ab;--line:#242a3a;--okbg:#06382b;--badbg:#431a1a;--shadow:0 4px 18px rgba(0,0,0,.35)}}
+  :root{
+    --bg:#f3f5fa;--card:#fff;--text:#14213d;--muted:#6f7a93;--line:#e6eaf3;
+    --pri:#1b3a78;--pri2:#2c5aa8;--h1:#10224a;--h2:#26498f;--acc:#ff8a1f;--acc2:#f26a0a;--ok:#12b981;--okbg:#dcfaee;--bad:#f0506e;--badbg:#fee4ea;
+    --shadow:0 2px 6px rgba(40,50,110,.05),0 10px 28px rgba(40,50,110,.08);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0b1226;--card:#131c36;--text:#eaeefa;--muted:#8d99b8;--line:#22304f;
+    --pri:#8fb0ff;--pri2:#4a78d4;--h1:#13224a;--h2:#2a4f96;--acc:#ff9a3d;--acc2:#ff8a1f;--ok:#34d3a0;--okbg:#0b3a2d;--bad:#ff7a93;--badbg:#45202b;
+    --shadow:0 2px 6px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);
+  }}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:560px;margin:0 auto;padding:0 16px 40px}
-  h1{font-size:22px;margin:0}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px 48px}
+  svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  h1{font-size:22px;margin:0;font-weight:800}
   .muted{color:var(--muted);font-size:14px}
-  .hero{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;margin:0 -16px;padding:22px 16px 56px;border-radius:0 0 28px 28px}
-  .hero .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+  .hero{position:relative;overflow:hidden;margin:0 -16px;padding:18px 16px 64px;color:#fff;border-radius:0 0 32px 32px;
+    background:var(--h1)}
+  .hero .bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .hero .who{display:flex;align-items:center;gap:12px}
   .hero .sub{opacity:.85;font-size:14px}
-  .hero button.ghost{background:rgba(255,255,255,.18);color:#fff;border:0;padding:8px 14px;font-size:14px}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:-36px 0 6px}
-  .stat{background:var(--card);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
-  .stat .lbl{font-size:13px;color:var(--muted)}
-  .stat .val{font-size:20px;font-weight:800;margin-top:2px}
+  .hero .right{display:flex;align-items:center;gap:8px}
+  .iconbtn{position:relative;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);border:0;color:#fff;padding:0;cursor:pointer}
+  .iconbtn.on{background:#fff;color:var(--h2)}
+  .badge{position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;border-radius:10px;background:var(--acc);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px;border:2px solid var(--h1)}
+  .ghostbtn{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:20px;padding:10px 14px;font:600 14px system-ui,sans-serif;cursor:pointer}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:-42px 0 4px;position:relative}
+  .stat{background:var(--card);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .lbl{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .stat .dot{width:8px;height:8px;border-radius:50%}
+  .stat .val{font-size:21px;font-weight:800;margin-top:4px;letter-spacing:-.01em}
   .recv{color:var(--ok)}.total{color:var(--bad)}
-  .av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:17px;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+  .av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:17px;flex:none;box-shadow:0 3px 10px rgba(30,40,100,.2)}
+  .av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
   .av.sm{width:34px;height:34px;font-size:14px}
-  .av.lg{width:64px;height:64px;font-size:26px}
-  .card{background:var(--card);border-radius:18px;padding:16px;margin:14px 0;box-shadow:var(--shadow)}
-  .banner{background:#fef3c7;color:#78350f;border-radius:12px;padding:10px 12px;font-size:14px;margin:14px 0}
-  button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 16px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;font-weight:600;transition:transform .08s,opacity .15s}
-  button:active{transform:scale(.97)}
-  .tabs{display:flex;gap:4px;background:var(--card);padding:4px;border-radius:14px;box-shadow:var(--shadow);margin:14px 0}
-  .tabs button{flex:1;background:transparent;color:var(--muted);padding:10px 4px;font-size:14px;font-weight:600;border-radius:11px}
-  .tabs button.on{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
-  .pick{padding-top:48px;text-align:center}
-  .pick h1{font-size:26px}
-  .names{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
-  button.name{background:var(--card);color:var(--text);box-shadow:var(--shadow);padding:18px 10px;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:16px}
-  .person{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .av.lg{width:68px;height:68px;font-size:28px}
+
+  .tabs{display:flex;gap:4px;background:var(--card);padding:5px;border-radius:16px;box-shadow:var(--shadow);margin:16px 0}
+  .tabs button{flex:1;background:transparent;border:0;color:var(--muted);padding:11px 4px;font:600 14px system-ui,sans-serif;border-radius:12px;cursor:pointer;transition:all .15s}
+  .tabs button.on{background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;box-shadow:0 4px 12px rgba(16,34,74,.35);border-bottom:3px solid var(--acc)}
+
+  .card{background:var(--card);border-radius:20px;padding:16px;margin:14px 0;box-shadow:var(--shadow)}
+  .person{display:flex;align-items:center;gap:12px}
   .person .nm{flex:1;font-weight:700}
-  .person .sum{font-weight:800;font-size:17px}
-  .debt{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
-  .debt .info{flex:1;min-width:0}
-  .debt .amt{font-weight:700;white-space:nowrap}
-  .debt input[type=checkbox]{appearance:none;width:26px;height:26px;border:2px solid var(--line);border-radius:8px;display:grid;place-items:center;cursor:pointer;flex:none;background:var(--bg)}
-  .debt input[type=checkbox]:hover{border-color:var(--ok)}
-  .debt input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}
-  .debt input[type=checkbox]:checked::after{content:"✓";color:#fff;font-size:16px;font-weight:700}
-  .actions{display:flex;gap:8px;margin:4px 0 8px}
-  .actions button{flex:1;padding:10px 8px;font-size:14px}
-  .actions button.ok{flex:2;background:var(--ok)}
-  .actions button.alt{background:var(--bg);color:var(--pri);border:2px solid var(--line)}
-  details summary{cursor:pointer;color:var(--muted);font-size:14px;padding:6px 0;list-style:none}
+  .person .sum{font-weight:800;font-size:18px}
+  .actions{display:flex;gap:8px;margin:14px 0 4px}
+  .btn{font:600 14.5px system-ui,sans-serif;cursor:pointer;border:0;border-radius:14px;padding:13px 16px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;transition:transform .08s,opacity .15s;display:inline-flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 6px 16px rgba(242,106,10,.32)}
+  .btn:active{transform:scale(.97)}
+    .btn.line{background:var(--bg);color:var(--pri);box-shadow:none;border:1.5px solid var(--line)}
+  .btn.block{width:100%}
+  .actions .btn{flex:1;padding:11px 8px;font-size:14px}
+  .actions .btn.ok{flex:2}
+  details summary{cursor:pointer;color:var(--muted);font-size:13.5px;padding:8px 0 2px;list-style:none}
   details summary::before{content:"▸ "}
   details[open] summary::before{content:"▾ "}
+  .debt{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+  .debt:first-of-type{margin-top:6px}
+  .debt .info{flex:1;min-width:0}
+  .debt .amt{font-weight:700;white-space:nowrap}
+  .debt input[type=checkbox]{appearance:none;width:26px;height:26px;border:2px solid var(--line);border-radius:9px;display:grid;place-items:center;cursor:pointer;flex:none;background:var(--bg)}
+  .debt input[type=checkbox]:hover{border-color:var(--ok)}
+  .debt input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}
+  .debt input[type=checkbox]:checked::after{content:"✓";color:#fff;font-size:15px;font-weight:700}
   .hint{font-size:13px;color:var(--muted);margin-top:8px}
-  label.chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
-  label.chk:has(input:checked){border-color:var(--pri);background:rgba(99,102,241,.08)}
-  label.chk input{width:18px;height:18px;accent-color:var(--pri)}
-  input[type=text]{width:100%;font:inherit;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--text);outline:none}
-  input[type=text]:focus{border-color:var(--pri)}
-  .amount-in{font-size:24px;font-weight:800}
+  .empty{text-align:center;color:var(--muted);padding:38px 16px}
+  .empty .big{font-size:42px;margin-bottom:4px}
+
+  input[type=text]{width:100%;font:inherit;padding:13px 14px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s}
+  input[type=text]:focus{border-color:var(--acc)}
+  .amount-in{font-size:26px;font-weight:800}
+  .sec{font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  label.chk{display:flex;align-items:center;gap:10px;padding:11px 12px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .15s}
+  label.chk:has(input:checked){border-color:var(--acc);background:rgba(255,138,31,.10)}
+  label.chk input{width:18px;height:18px;accent-color:var(--acc2)}
+  .seg{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:14px;margin:16px 0}
+  .seg button{flex:1;background:transparent;border:0;color:var(--muted);padding:10px;font:600 14px system-ui,sans-serif;border-radius:11px;cursor:pointer}
+  .seg button.on{background:var(--card);color:var(--pri);box-shadow:var(--shadow)}
   .row{display:flex;align-items:center;gap:10px;margin:8px 0}
   .row input[type=text]{width:130px}
-  .seg{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:12px;margin:14px 0}
-  .seg button{flex:1;background:transparent;color:var(--muted);padding:9px;font-size:14px}
-  .seg button.on{background:var(--card);color:var(--pri);box-shadow:var(--shadow)}
-  .preview{font-size:14px;margin:10px 0 14px;padding:10px 12px;background:var(--bg);border-radius:12px;color:var(--muted);min-height:20px}
-  .empty{text-align:center;color:var(--muted);padding:34px 0}
-  .empty .big{font-size:40px}
-  .sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px}
+  .preview{font-size:14px;margin:12px 0 16px;padding:12px 14px;background:var(--bg);border-radius:14px;color:var(--muted);min-height:20px}
+  .preview .warn{color:var(--bad)}.preview .net{color:var(--acc2);font-weight:600}
+
+  .nhead{display:flex;align-items:center;justify-content:space-between;margin:20px 0 2px}
+  .nhead h2{font-size:19px;font-weight:800;margin:0}
+  .linkbtn{background:none;border:0;color:var(--pri);font:600 13px system-ui,sans-serif;cursor:pointer;padding:6px}
+  .notif{display:flex;gap:12px;padding:14px;border-radius:18px;background:var(--card);margin:10px 0;cursor:pointer;position:relative;box-shadow:var(--shadow)}
+  .notif.unread{background:linear-gradient(135deg,rgba(255,138,31,.12),rgba(38,73,143,.08));border-left:3px solid var(--acc)}
+  .notif.unread::before{content:"";position:absolute;top:16px;right:46px;width:9px;height:9px;border-radius:50%;background:var(--acc)}
+  .nico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;color:#fff}
+  .nico.new{background:linear-gradient(135deg,var(--acc),var(--acc2))}
+  .nico.offset{background:linear-gradient(135deg,var(--h1),var(--h2))}
+  .nico.paid{background:linear-gradient(135deg,#12b981,#0d9f6e)}
+  .notif .body{flex:1;min-width:0}
+  .notif .t{font-size:14.5px}
+  .notif .x{background:none;border:0;color:var(--muted);cursor:pointer;padding:2px;align-self:flex-start}
+
+  .pick{padding-top:56px;text-align:center}
+  .pick .logo{font-size:52px}
+  .pick h1{font-size:28px;margin:4px 0 6px}
+  .names{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}
+  button.name{background:var(--card);color:var(--text);border:0;border-radius:20px;box-shadow:var(--shadow);padding:20px 10px;display:flex;flex-direction:column;align-items:center;gap:12px;font:700 16px system-ui,sans-serif;cursor:pointer;transition:transform .1s}
+  button.name:active{transform:scale(.97)}
+
+  .banner{background:rgba(255,138,31,.14);color:var(--text);border-radius:14px;padding:10px 12px;font-size:13.5px;margin:14px 0}
+  #toasts{position:fixed;top:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;pointer-events:none}
+  .toast{max-width:420px;margin:0 16px;background:#10224a;border-left:4px solid var(--acc);color:#fff;padding:12px 16px;border-radius:16px;font-size:14.5px;box-shadow:0 12px 32px rgba(0,0,0,.3);animation:in .25s ease}
+  @keyframes in{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
+<div id="toasts"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 /* ================== CẤU HÌNH ================== */
-// Dán config Firebase của bạn vào đây (xem README.md). Để trống = chạy thử, chỉ lưu trên máy này.
 const firebaseConfig = {
   apiKey: "AIzaSyD5s7ny-jOe0QeLbDZqc8NdLGNClnHAmK8",
   authDomain: "m2p-56de3.firebaseapp.com",
@@ -91,71 +137,68 @@ const MEMBERS = ["Thiện", "Phúc", "Quyền", "Linh", "Anh", "Thụy"];
 /* ============================================== */
 
 const useFirebase = !!firebaseConfig.databaseURL;
-let db = null, debts = {}, me = null, tab = "owed", draft = null;
+const $ = id => document.getElementById(id);
+let debts = {}, notifs = {}, me = null, tab = "owed", draft = null, seen = null;
 try { me = localStorage.getItem("me"); } catch (e) {}
 if (!MEMBERS.includes(me)) me = null;
 
-/* ---------- Lưu trữ ---------- */
-function localLoad(){ try { return JSON.parse(localStorage.getItem("debts") || "{}"); } catch(e){ return {}; } }
-function localSave(){ try { localStorage.setItem("debts", JSON.stringify(debts)); } catch(e){} }
+/* ---------- Biểu tượng ---------- */
+const IC = {
+  bell:'<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  swap:'<svg viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  coin:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 10c0-1 1.2-1.7 2.5-1.7s2.5.7 2.5 1.7-1.2 1.5-2.5 1.7S9.5 13 9.5 14s1.2 1.7 2.5 1.7 2.5-.7 2.5-1.7"/></svg>',
+  paid:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>'
+};
 
+/* ---------- Lưu trữ ---------- */
+function localLoad(){ try { const s = JSON.parse(localStorage.getItem("store") || "{}"); debts = s.debts || {}; notifs = s.notifs || {}; } catch(e){} }
+function localSave(){ try { localStorage.setItem("store", JSON.stringify({debts, notifs})); } catch(e){} }
+function setPath(parts, v){
+  let o = parts[0] === "debts" ? debts : notifs;
+  for (let i = 1; i < parts.length - 1; i++) o = o[parts[i]] = o[parts[i]] || {};
+  const k = parts[parts.length - 1];
+  if (v === null) delete o[k]; else o[k] = v;
+}
+// Mọi thay đổi gộp thành 1 lần ghi duy nhất (nguyên tử): {"debts/id": {...} | null, "notifs/Tên/id": {...}}
+function commit(updates){
+  if (useFirebase) {
+    return firebase.database().ref().update(updates).catch(e =>
+      alert("Không lưu được: " + e.message + "\nKiểm tra rules Firebase đã có nhánh debts và notifs chưa (xem README)."));
+  }
+  Object.entries(updates).forEach(([p,v]) => setPath(p.split("/"), v));
+  localSave(); refresh();
+}
 if (useFirebase) {
   firebase.initializeApp(firebaseConfig);
-  db = firebase.database().ref("debts");
-  db.on("value", s => { debts = s.val() || {}; render(); });
-} else {
-  debts = localLoad();
-}
-function addDebts(list){
-  list.forEach(d => {
-    if (useFirebase) db.push(d);
-    else debts["l" + Date.now() + Math.random().toString(36).slice(2,6)] = d;
-  });
-  if (!useFirebase) { localSave(); render(); }
-}
-function removeDebt(id){
-  if (useFirebase) db.child(id).remove();
-  else { delete debts[id]; localSave(); render(); }
-}
-function setDebtAmount(id, amount){
-  if (useFirebase) db.child(id).update({amount});
-  else { debts[id].amount = amount; localSave(); render(); }
-}
-function settleAll(name){
-  const list = mine("creditor").filter(([,d]) => d.debtor === name);
-  const sum = list.reduce((s,[,d]) => s + d.amount, 0);
-  if (!list.length || !confirm(`Xác nhận ${name} đã trả hết ${fmt(sum)} (${list.length} khoản)?`)) return;
-  list.forEach(([id]) => removeDebt(id));
-}
-function settlePartial(name){
-  const list = mine("creditor").filter(([,d]) => d.debtor === name); // cũ nhất trước
-  const sum = list.reduce((s,[,d]) => s + d.amount, 0);
-  const v = prompt(`${name} đang nợ ${fmt(sum)}. Nhập số tiền đã nhận (vd 50k):`);
-  if (v === null) return;
-  let left = parseMoney(v);
-  if (!left) { alert("Số tiền không hợp lệ."); return; }
-  if (left > sum) { alert(`Vượt quá số nợ (${fmt(sum)}).`); return; }
-  for (const [id,d] of list) {
-    if (left <= 0) break;
-    if (left >= d.amount) { left -= d.amount; removeDebt(id); }
-    else { setDebtAmount(id, d.amount - left); left = 0; }
-  }
-}
+  const rdb = firebase.database();
+  rdb.ref("debts").on("value", s => { debts = s.val() || {}; refresh(); });
+  rdb.ref("notifs").on("value", s => { notifs = s.val() || {}; checkToasts(); refresh(); });
+} else localLoad();
 
 /* ---------- Tiện ích ---------- */
 const fmt = n => n.toLocaleString("vi-VN") + "đ";
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 function parseMoney(v){
   v = String(v).trim().toLowerCase().replace(/[.,\s]/g, "");
-  let m = v.match(/^(\d+)(k|tr|m)?$/);
+  const m = v.match(/^(\d+)(k|tr|m)?$/);
   if (!m) return 0;
   let n = parseInt(m[1], 10);
-  if (m[2] === "k") n *= 1000;
-  else if (m[2] === "tr" || m[2] === "m") n *= 1000000;
+  if (m[2] === "k") n *= 1000; else if (m[2] === "tr" || m[2] === "m") n *= 1000000;
   return n;
 }
+function ago(t){
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return "Vừa xong";
+  if (s < 3600) return Math.floor(s / 60) + " phút trước";
+  if (s < 86400) return Math.floor(s / 3600) + " giờ trước";
+  return new Date(t).toLocaleDateString("vi-VN");
+}
 function newDraft(){ return { amount:"", note:"", mode:"equal", sel:{}, custom:{} }; }
-function mine(role){ // role: 'creditor' | 'debtor'
+function mine(role){
   return Object.entries(debts).filter(([,d]) => d[role] === me).sort((a,b) => a[1].createdAt - b[1].createdAt);
 }
 function groupBy(list, key){
@@ -163,92 +206,169 @@ function groupBy(list, key){
   list.forEach(([id,d]) => (g[d[key]] = g[d[key]] || []).push([id,d]));
   return g;
 }
+const COLORS = [["#2c5aa8","#1b3a78"],["#ff9a3d","#f26a0a"],["#2bb3a8","#0f766e"],["#e5578a","#be3a6a"],["#8b6bd9","#5b3fb0"],["#6b7c9c","#3f4d6b"]];
+const AVATARS = { "Quyền": "avatars/quyen.jpg", "Linh": "avatars/linh.jpg", "Thụy": "avatars/thuy.jpg", "Phúc": "avatars/phuc.jpg", "Anh": "avatars/anh.jpg", "Thiện": "avatars/thien.jpg" }; // thêm ảnh cho người khác: "Tên": "avatars/ten.jpg"
+function avatar(n, size){
+  if (AVATARS[n]) return `<div class="av ${size||""}"><img src="${AVATARS[n]}" alt="${esc(n)}"></div>`;
+  const [a,b] = COLORS[Math.max(0, MEMBERS.indexOf(n)) % COLORS.length];
+  return `<div class="av ${size||""}" style="background:linear-gradient(135deg,${a},${b})">${esc(n.charAt(0))}</div>`;
+}
+
+/* ---------- Thông báo ---------- */
+function notify(updates, to, text, type){
+  updates[`notifs/${to}/${uid()}`] = { text, type, createdAt: Date.now(), read: false };
+}
+function myNotifs(){
+  return Object.entries(notifs[me] || {}).map(([id,n]) => ({id, ...n})).sort((a,b) => b.createdAt - a.createdAt);
+}
+function unreadCount(){ return myNotifs().filter(n => !n.read).length; }
+function toast(text){
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = text;
+  $("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 6000);
+}
+function checkToasts(){
+  if (!me) return;
+  const cur = myNotifs();
+  if (seen === null) { seen = new Set(cur.map(n => n.id)); return; }
+  cur.forEach(n => { if (!seen.has(n.id)) { seen.add(n.id); if (!n.read) toast(n.text); } });
+}
+function readNotif(id){ commit({[`notifs/${me}/${id}/read`]: true}); }
+function readAll(){
+  const u = {}; myNotifs().filter(n => !n.read).forEach(n => u[`notifs/${me}/${n.id}/read`] = true);
+  if (Object.keys(u).length) commit(u);
+}
+function delNotif(id, ev){ ev.stopPropagation(); commit({[`notifs/${me}/${id}`]: null}); }
+function clearNotifs(){ if (confirm("Xoá toàn bộ thông báo?")) commit({[`notifs/${me}`]: null}); }
+
+/* ---------- Gạt nợ (bù trừ) ---------- */
+// Bù trừ nợ hai chiều giữa A và B trong `work`, ghi thay đổi vào `updates`, báo cho cả hai.
+function netPair(A, B, work, updates){
+  const byTime = (x,y) => x[1].createdAt - y[1].createdAt;
+  const fwd = Object.entries(work).filter(([,d]) => d.creditor === A && d.debtor === B).sort(byTime); // B nợ A
+  const rev = Object.entries(work).filter(([,d]) => d.creditor === B && d.debtor === A).sort(byTime); // A nợ B
+  const F = fwd.reduce((s,[,d]) => s + d.amount, 0), R = rev.reduce((s,[,d]) => s + d.amount, 0);
+  const off = Math.min(F, R);
+  if (!off) return;
+  const consume = (list, left) => {
+    for (const [id,d] of list) {
+      if (left <= 0) break;
+      const fresh = updates[`debts/${id}`] && typeof updates[`debts/${id}`] === "object";
+      if (left >= d.amount) { left -= d.amount; updates[`debts/${id}`] = null; delete work[id]; }
+      else { d.amount -= left; left = 0; if (!fresh) updates[`debts/${id}/amount`] = d.amount; }
+    }
+  };
+  consume(fwd, off); consume(rev, off);
+  const net = F - R; // >0: B còn nợ A
+  notify(updates, A, `Gạt nợ với ${B}: bù trừ ${fmt(off)}. ` + (net > 0 ? `${B} còn nợ bạn ${fmt(net)}.` : net < 0 ? `Bạn còn nợ ${B} ${fmt(-net)}.` : "Hai bạn không còn nợ nhau."), "offset");
+  notify(updates, B, `Gạt nợ với ${A}: bù trừ ${fmt(off)}. ` + (net > 0 ? `Bạn còn nợ ${A} ${fmt(net)}.` : net < 0 ? `${A} còn nợ bạn ${fmt(-net)}.` : "Hai bạn không còn nợ nhau."), "offset");
+}
 
 /* ---------- Giao diện ---------- */
 function render(){
-  const app = document.getElementById("app");
+  const app = $("app");
   if (!me) { app.innerHTML = pickView(); return; }
   if (!draft) draft = newDraft();
-  const owedTotal = mine("creditor").reduce((s,[,d]) => s + d.amount, 0);
-  const oweTotal  = mine("debtor").reduce((s,[,d]) => s + d.amount, 0);
-  app.innerHTML = `
-    <div class="hero"><div class="top">
-      <div class="who">${avatar(me)}<div><h1>Chào ${esc(me)} 👋</h1><div class="sub">Quản lý tiền chia nhóm</div></div></div>
-      <button class="ghost" onclick="switchUser()">Đổi tên</button>
+  app.innerHTML = `<div id="hdr"></div><div id="content"></div>`;
+  drawHeader(); drawContent();
+}
+function refresh(){
+  if (!me || !$("hdr")) { render(); return; }
+  drawHeader();
+  if (tab !== "add") drawContent();
+}
+function drawHeader(){
+  const owed = mine("creditor").reduce((s,[,d]) => s + d.amount, 0);
+  const owe = mine("debtor").reduce((s,[,d]) => s + d.amount, 0);
+  const net = owed - owe, un = unreadCount();
+  document.title = (un ? `(${un}) ` : "") + "Chia tiền nhóm";
+  $("hdr").innerHTML = `
+    <div class="hero"><div class="bar">
+      <div class="who">${avatar(me)}<div><h1>Chào ${esc(me)} 👋</h1><div class="sub">${net>0?`Bạn đang dư ${fmt(net)}`:net<0?`Bạn đang âm ${fmt(-net)}`:"Bạn không nợ ai, không ai nợ bạn"}</div></div></div>
+      <div class="right">
+        <button class="iconbtn ${tab==="notif"?"on":""}" onclick="setTab('notif')" aria-label="Thông báo">${IC.bell}${un ? `<span class="badge">${un}</span>` : ""}</button>
+        <button class="ghostbtn" onclick="switchUser()">Đổi tên</button>
+      </div>
     </div></div>
     <div class="stats">
-      <div class="stat"><div class="lbl">Bạn cần đòi</div><div class="val recv">${fmt(owedTotal)}</div></div>
-      <div class="stat"><div class="lbl">Bạn phải trả</div><div class="val total">${fmt(oweTotal)}</div></div>
+      <div class="stat"><div class="lbl"><span class="dot" style="background:var(--ok)"></span>Bạn cần đòi</div><div class="val recv">${fmt(owed)}</div></div>
+      <div class="stat"><div class="lbl"><span class="dot" style="background:var(--bad)"></span>Bạn phải trả</div><div class="val total">${fmt(owe)}</div></div>
     </div>
-    ${useFirebase ? "" : `<div class="banner">Chế độ chạy thử: dữ liệu chỉ lưu trên máy này. Dán config Firebase để cả nhóm cùng xem (xem README.md).</div>`}
+    ${useFirebase ? "" : `<div class="banner">Chế độ chạy thử: dữ liệu chỉ lưu trên máy này.</div>`}
     <div class="tabs">
-      <button class="${tab==="owed"?"on":""}" onclick="setTab('owed')">Tôi cần đòi</button>
-      <button class="${tab==="owe"?"on":""}" onclick="setTab('owe')">Tôi cần trả</button>
-      <button class="${tab==="add"?"on":""}" onclick="setTab('add')">+ Chia tiền</button>
-    </div>
-    ${tab==="owed" ? owedView() : tab==="owe" ? oweView() : addView()}
-  `;
+      <button class="${tab==="owed"?"on":""}" onclick="setTab('owed')">Cần đòi</button>
+      <button class="${tab==="owe"?"on":""}" onclick="setTab('owe')">Cần trả</button>
+      <button class="${tab==="add"?"on":""}" onclick="setTab('add')">Chia tiền</button>
+    </div>`;
+}
+function drawContent(){
+  $("content").innerHTML = tab === "owed" ? owedView() : tab === "owe" ? oweView() : tab === "notif" ? notifView() : addView();
 }
 function pickView(){
-  return `<div class="pick"><div style="font-size:48px">💸</div><h1>Chia tiền nhóm</h1><div class="muted">Bạn là ai?</div>
+  return `<div class="pick"><div class="logo">💸</div><h1>Chia tiền nhóm</h1><div class="muted">Chọn tên để xem các khoản nợ của bạn</div>
     ${useFirebase ? "" : `<div class="banner">Chế độ chạy thử: chưa cấu hình Firebase.</div>`}
     <div class="names">${MEMBERS.map(n => `<button class="name" onclick="pick('${n}')">${avatar(n,"lg")}${n}</button>`).join("")}</div></div>`;
 }
-const COLORS = ["#6366f1","#ec4899","#f59e0b","#10b981","#06b6d4","#ef4444"];
-function avatar(n, size){
-  const c = COLORS[Math.max(0, MEMBERS.indexOf(n)) % COLORS.length];
-  return `<div class="av ${size||""}" style="background:${c}">${esc(n.charAt(0))}</div>`;
-}
+function emptyView(text){ return `<div class="card empty"><div class="big">🎉</div><div>${text}</div></div>`; }
 function owedView(){
-  const g = groupBy(mine("creditor"), "debtor");
-  const names = Object.keys(g);
-  if (!names.length) return `<div class="card empty"><div class="big">🎉</div>Không ai nợ bạn</div>`;
+  const g = groupBy(mine("creditor"), "debtor"), names = Object.keys(g);
+  if (!names.length) return emptyView("Không ai đang nợ bạn");
   return names.map(n => {
     const sum = g[n].reduce((s,[,d]) => s + d.amount, 0);
-    return `<div class="card"><div class="person">${avatar(n,"sm")}<span class="nm">${esc(n)} nợ bạn</span><span class="sum recv">${fmt(sum)}</span></div>
+    return `<div class="card"><div class="person">${avatar(n)}<span class="nm">${esc(n)}</span><span class="sum recv">${fmt(sum)}</span></div>
       <div class="actions">
-        <button class="ok" onclick="settleAll('${n}')">✓ ${esc(n)} đã trả hết</button>
-        <button class="alt" onclick="settlePartial('${n}')">Trả một phần</button>
+        <button class="btn ok" onclick="settleAll('${n}')">${IC.check} Đã trả hết</button>
+        <button class="btn line" onclick="settlePartial('${n}')">Trả một phần</button>
       </div>
-      <details><summary>Xem ${g[n].length} khoản</summary>
+      <details><summary>${g[n].length} khoản chi tiết</summary>
       ${g[n].map(([id,d]) => `<div class="debt">
-        <input type="checkbox" title="Đã trả" onchange="markPaid('${id}')">
+        <input type="checkbox" title="Đã trả khoản này" onchange="markPaid('${id}')">
         <div class="info"><div>${esc(d.note || "(không ghi chú)")}</div><div class="muted">${new Date(d.createdAt).toLocaleDateString("vi-VN")}</div></div>
         <div class="amt">${fmt(d.amount)}</div></div>`).join("")}
-      <div class="hint">Cần xoá riêng một khoản thì tick ô vuông bên trái khoản đó.</div></details></div>`;
+      <div class="hint">Tick ô vuông để xoá riêng từng khoản.</div></details></div>`;
   }).join("");
 }
 function oweView(){
-  const g = groupBy(mine("debtor"), "creditor");
-  const names = Object.keys(g);
-  if (!names.length) return `<div class="card empty"><div class="big">🎉</div>Bạn không nợ ai</div>`;
+  const g = groupBy(mine("debtor"), "creditor"), names = Object.keys(g);
+  if (!names.length) return emptyView("Bạn không nợ ai");
   return names.map(n => {
     const sum = g[n].reduce((s,[,d]) => s + d.amount, 0);
-    return `<div class="card"><div class="person">${avatar(n,"sm")}<span class="nm">Trả cho ${esc(n)}</span><span class="sum total">${fmt(sum)}</span></div>
+    return `<div class="card"><div class="person">${avatar(n)}<span class="nm">Trả cho ${esc(n)}</span><span class="sum total">${fmt(sum)}</span></div>
+      <details open><summary>${g[n].length} khoản chi tiết</summary>
       ${g[n].map(([,d]) => `<div class="debt">
         <div class="info"><div>${esc(d.note || "(không ghi chú)")}</div><div class="muted">${new Date(d.createdAt).toLocaleDateString("vi-VN")}</div></div>
         <div class="amt">${fmt(d.amount)}</div></div>`).join("")}
-      <div class="hint">${esc(n)} sẽ tick xoá khi nhận được tiền.</div></div>`;
+      <div class="hint">${esc(n)} sẽ xác nhận khi nhận được tiền.</div></details></div>`;
   }).join("");
 }
+function notifView(){
+  const list = myNotifs();
+  const head = `<div class="nhead"><h2>Thông báo</h2><div><button class="linkbtn" onclick="readAll()">Đánh dấu đã đọc</button><button class="linkbtn" onclick="clearNotifs()">Xoá hết</button></div></div>`;
+  if (!list.length) return head + emptyView("Chưa có thông báo nào");
+  const ico = {new:IC.coin, offset:IC.swap, paid:IC.paid};
+  return head + list.map(n => `<div class="notif ${n.read?"":"unread"}" onclick="readNotif('${n.id}')">
+    <div class="nico ${n.type||""}">${ico[n.type] || IC.bell}</div>
+    <div class="body"><div class="t">${esc(n.text)}</div><div class="muted">${ago(n.createdAt)}</div></div>
+    <button class="x" onclick="delNotif('${n.id}',event)" aria-label="Xoá">${IC.x}</button></div>`).join("");
+}
 function addView(){
-  const d = draft;
-  const picked = MEMBERS.filter(n => d.sel[n]);
+  const d = draft, picked = MEMBERS.filter(n => d.sel[n]);
   return `<div class="card">
-    <div class="person">${avatar(me,"sm")}<span class="nm">${esc(me)} <span class="muted">là người trả tiền</span></span></div>
-    <input type="text" class="amount-in" id="amount" inputmode="text" placeholder="Tổng tiền, vd: 120k hoặc 120000" value="${esc(d.amount)}" oninput="onAmount(this.value)">
+    <div class="person" style="margin-bottom:14px">${avatar(me,"sm")}<span class="nm">${esc(me)} <span class="muted">là người trả tiền</span></span></div>
+    <input type="text" class="amount-in" id="amount" placeholder="Tổng tiền, vd 120k" value="${esc(d.amount)}" oninput="onAmount(this.value)">
     <div style="height:8px"></div>
-    <input type="text" id="note" placeholder="Ghi chú, vd: ăn trưa" value="${esc(d.note)}" oninput="draft.note=this.value">
-    <div class="sec-title">Chia cho ai? <span style="text-transform:none;font-weight:400">(tick cả bạn nếu bạn cũng có phần)</span></div>
+    <input type="text" id="note" placeholder="Ghi chú, vd ăn trưa" value="${esc(d.note)}" oninput="draft.note=this.value">
+    <div class="sec">Chia cho ai <span style="text-transform:none;letter-spacing:0;font-weight:400">(tick cả bạn nếu bạn cũng có phần)</span></div>
     <div class="grid">${MEMBERS.map(n => `<label class="chk"><input type="checkbox" ${d.sel[n]?"checked":""} onchange="toggleSel('${n}',this.checked)"> ${n}${n===me?" (tôi)":""}</label>`).join("")}</div>
     <div class="seg">
       <button class="${d.mode==="equal"?"on":""}" onclick="setMode('equal')">Chia đều</button>
       <button class="${d.mode==="custom"?"on":""}" onclick="setMode('custom')">Tự nhập từng người</button>
     </div>
-    ${d.mode==="custom" ? picked.map(n => `<div class="row">${avatar(n,"sm")}<span style="flex:1;font-weight:600">${n}</span>
-      <input type="text" inputmode="text" placeholder="vd 50k" value="${esc(d.custom[n]||"")}" oninput="onCustom('${n}',this.value)"></div>`).join("") : ""}
+    ${d.mode==="custom" ? picked.map(n => `<div class="row">${avatar(n,"sm")}<span style="flex:1;font-weight:500">${n}</span>
+      <input type="text" placeholder="vd 50k" value="${esc(d.custom[n]||"")}" oninput="onCustom('${n}',this.value)"></div>`).join("") : ""}
     <div class="preview" id="preview">${previewText()}</div>
-    <button onclick="submitSplit()" style="width:100%">Lưu khoản chia</button>
+    <button class="btn block" onclick="submitSplit()">Lưu khoản chia</button>
   </div>`;
 }
 function computeShares(){
@@ -268,34 +388,70 @@ function computeShares(){
 }
 function previewText(){
   const r = computeShares();
-  const lines = Object.entries(r.shares).map(([n,v]) => `${n}: ${fmt(v)}`).join(" · ");
-  return (lines || "") + (r.msg ? `<br><span style="color:var(--bad)">${r.msg}</span>` : "");
+  let html = Object.entries(r.shares).map(([n,v]) => `${n}: ${fmt(v)}`).join(" · ");
+  if (r.msg) html += `<br><span class="warn">${r.msg}</span>`;
+  Object.keys(r.shares).filter(n => n !== me).forEach(n => {
+    const back = Object.values(debts).filter(d => d.creditor === n && d.debtor === me).reduce((s,d) => s + d.amount, 0);
+    if (back) html += `<br><span class="net">Bạn đang nợ ${n} ${fmt(back)} — sẽ tự động gạt nợ.</span>`;
+  });
+  return html;
 }
-function updatePreview(){ const p = document.getElementById("preview"); if (p) p.innerHTML = previewText(); }
+function updatePreview(){ const p = $("preview"); if (p) p.innerHTML = previewText(); }
 
 /* ---------- Hành động ---------- */
-function pick(n){ me = n; try { localStorage.setItem("me", n); } catch(e){} tab = "owed"; render(); }
-function switchUser(){ me = null; render(); }
-function setTab(t){ tab = t; render(); }
+function pick(n){ me = n; seen = null; try { localStorage.setItem("me", n); } catch(e){} tab = "owed"; checkToasts(); render(); }
+function switchUser(){ me = null; seen = null; render(); }
+function setTab(t){ tab = t; drawHeader(); drawContent(); }
 function onAmount(v){ draft.amount = v; updatePreview(); }
 function onCustom(n,v){ draft.custom[n] = v; updatePreview(); }
-function toggleSel(n,c){ draft.sel[n] = c; render(); }
-function setMode(m){ draft.mode = m; render(); }
+function toggleSel(n,c){ draft.sel[n] = c; drawContent(); }
+function setMode(m){ draft.mode = m; drawContent(); }
+
 function markPaid(id){
   const d = debts[id];
-  if (d && confirm(`Xác nhận ${d.debtor} đã trả ${fmt(d.amount)}?`)) removeDebt(id);
-  else render();
+  if (!d || !confirm(`Xác nhận ${d.debtor} đã trả ${fmt(d.amount)}?`)) { refresh(); return; }
+  const u = {[`debts/${id}`]: null};
+  notify(u, d.debtor, `${me} xác nhận bạn đã trả ${fmt(d.amount)}${d.note ? ` (${d.note})` : ""}.`, "paid");
+  commit(u);
+}
+function settleAll(name){
+  const list = mine("creditor").filter(([,d]) => d.debtor === name);
+  const sum = list.reduce((s,[,d]) => s + d.amount, 0);
+  if (!list.length || !confirm(`Xác nhận ${name} đã trả hết ${fmt(sum)} (${list.length} khoản)?`)) return;
+  const u = {}; list.forEach(([id]) => u[`debts/${id}`] = null);
+  notify(u, name, `${me} xác nhận bạn đã trả hết ${fmt(sum)}.`, "paid");
+  commit(u);
+}
+function settlePartial(name){
+  const list = mine("creditor").filter(([,d]) => d.debtor === name);
+  const sum = list.reduce((s,[,d]) => s + d.amount, 0);
+  const v = prompt(`${name} đang nợ ${fmt(sum)}. Nhập số tiền đã nhận (vd 50k):`);
+  if (v === null) return;
+  const paid = parseMoney(v); let left = paid;
+  if (!paid) { alert("Số tiền không hợp lệ."); return; }
+  if (paid > sum) { alert(`Vượt quá số nợ (${fmt(sum)}).`); return; }
+  const u = {};
+  for (const [id,d] of list) {
+    if (left <= 0) break;
+    if (left >= d.amount) { left -= d.amount; u[`debts/${id}`] = null; }
+    else { u[`debts/${id}/amount`] = d.amount - left; left = 0; }
+  }
+  notify(u, name, `${me} xác nhận bạn đã trả ${fmt(paid)}. Còn nợ ${fmt(sum - paid)}.`, "paid");
+  commit(u);
 }
 function submitSplit(){
   const r = computeShares();
   if (!r.ok) { alert(r.msg); return; }
-  const now = Date.now();
-  const list = Object.entries(r.shares)
-    .filter(([n,v]) => n !== me && v > 0)
-    .map(([n,v]) => ({creditor: me, debtor: n, amount: v, note: draft.note.trim(), createdAt: now}));
-  if (!list.length) { alert("Không có ai nợ bạn trong khoản này."); return; }
-  addDebts(list);
-  draft = newDraft(); tab = "owed"; render();
+  const now = Date.now(), u = {}, work = JSON.parse(JSON.stringify(debts)), targets = [];
+  Object.entries(r.shares).filter(([n,v]) => n !== me && v > 0).forEach(([n,v]) => {
+    const id = uid(), rec = {creditor: me, debtor: n, amount: v, note: draft.note.trim(), createdAt: now};
+    u[`debts/${id}`] = rec; work[id] = rec; targets.push(n);
+    notify(u, n, `${me} chia bạn ${fmt(v)}${rec.note ? ` — ${rec.note}` : ""}.`, "new");
+  });
+  if (!targets.length) { alert("Không có ai nợ bạn trong khoản này."); return; }
+  targets.forEach(n => netPair(me, n, work, u));
+  commit(u);
+  draft = newDraft(); tab = "owed"; drawHeader(); drawContent();
 }
 render();
 </script>
