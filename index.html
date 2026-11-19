@@ -46,6 +46,13 @@
   .debt input[type=checkbox]:hover{border-color:var(--ok)}
   .debt input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}
   .debt input[type=checkbox]:checked::after{content:"✓";color:#fff;font-size:16px;font-weight:700}
+  .actions{display:flex;gap:8px;margin:4px 0 8px}
+  .actions button{flex:1;padding:10px 8px;font-size:14px}
+  .actions button.ok{flex:2;background:var(--ok)}
+  .actions button.alt{background:var(--bg);color:var(--pri);border:2px solid var(--line)}
+  details summary{cursor:pointer;color:var(--muted);font-size:14px;padding:6px 0;list-style:none}
+  details summary::before{content:"▸ "}
+  details[open] summary::before{content:"▾ "}
   .hint{font-size:13px;color:var(--muted);margin-top:8px}
   label.chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
   label.chk:has(input:checked){border-color:var(--pri);background:rgba(99,102,241,.08)}
@@ -109,6 +116,30 @@ function addDebts(list){
 function removeDebt(id){
   if (useFirebase) db.child(id).remove();
   else { delete debts[id]; localSave(); render(); }
+}
+function setDebtAmount(id, amount){
+  if (useFirebase) db.child(id).update({amount});
+  else { debts[id].amount = amount; localSave(); render(); }
+}
+function settleAll(name){
+  const list = mine("creditor").filter(([,d]) => d.debtor === name);
+  const sum = list.reduce((s,[,d]) => s + d.amount, 0);
+  if (!list.length || !confirm(`Xác nhận ${name} đã trả hết ${fmt(sum)} (${list.length} khoản)?`)) return;
+  list.forEach(([id]) => removeDebt(id));
+}
+function settlePartial(name){
+  const list = mine("creditor").filter(([,d]) => d.debtor === name); // cũ nhất trước
+  const sum = list.reduce((s,[,d]) => s + d.amount, 0);
+  const v = prompt(`${name} đang nợ ${fmt(sum)}. Nhập số tiền đã nhận (vd 50k):`);
+  if (v === null) return;
+  let left = parseMoney(v);
+  if (!left) { alert("Số tiền không hợp lệ."); return; }
+  if (left > sum) { alert(`Vượt quá số nợ (${fmt(sum)}).`); return; }
+  for (const [id,d] of list) {
+    if (left <= 0) break;
+    if (left >= d.amount) { left -= d.amount; removeDebt(id); }
+    else { setDebtAmount(id, d.amount - left); left = 0; }
+  }
 }
 
 /* ---------- Tiện ích ---------- */
@@ -175,11 +206,16 @@ function owedView(){
   return names.map(n => {
     const sum = g[n].reduce((s,[,d]) => s + d.amount, 0);
     return `<div class="card"><div class="person">${avatar(n,"sm")}<span class="nm">${esc(n)} nợ bạn</span><span class="sum recv">${fmt(sum)}</span></div>
+      <div class="actions">
+        <button class="ok" onclick="settleAll('${n}')">✓ ${esc(n)} đã trả hết</button>
+        <button class="alt" onclick="settlePartial('${n}')">Trả một phần</button>
+      </div>
+      <details><summary>Xem ${g[n].length} khoản</summary>
       ${g[n].map(([id,d]) => `<div class="debt">
         <input type="checkbox" title="Đã trả" onchange="markPaid('${id}')">
         <div class="info"><div>${esc(d.note || "(không ghi chú)")}</div><div class="muted">${new Date(d.createdAt).toLocaleDateString("vi-VN")}</div></div>
         <div class="amt">${fmt(d.amount)}</div></div>`).join("")}
-      <div class="hint">Tick ô vuông khi đã nhận được tiền để xoá khoản nợ.</div></div>`;
+      <div class="hint">Cần xoá riêng một khoản thì tick ô vuông bên trái khoản đó.</div></details></div>`;
   }).join("");
 }
 function oweView(){
