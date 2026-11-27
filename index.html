@@ -365,7 +365,7 @@ function toggleNewPerson(p){
 function newDayForm(){
   const n = newDay, all = MEMBERS;
   return `<div class="card"><div class="sec" style="margin-top:0">Sổ mới</div>
-    <input type="text" placeholder="Tên sổ (không bắt buộc), vd Đi Vũng Tàu" value="${esc(n.title)}" oninput="newDay.title=this.value">
+    <input type="text" placeholder="Tên sổ" value="${esc(n.title)}" oninput="newDay.title=this.value">
     <div style="height:8px"></div>
     <input type="date" value="${n.date}" onchange="newDay.date=this.value">
     <div class="sec">Ai tham gia?</div>
@@ -392,15 +392,14 @@ function dayDetail(id){
       <span class="pill ${open ? "open" : "closed"}">${open ? "Đang mở" : "Đã kết sổ"}</span></div>
       <div class="sec">Người tham gia (${people.length})</div>
       <div class="chips">${people.map(p => `<span class="chip static">${avatar(p,"sm")}${esc(p)}${open ? `<button class="x" onclick="removeDayPerson('${p}')" aria-label="Bỏ ${esc(p)}">${IC.x}</button>` : ""}</span>`).join("")}</div>
-      ${open && missing.length ? `<div class="muted">Thêm lại người vừa bỏ:</div><div class="chips">${missing.map(m => `<span class="chip" onclick="addDayPerson('${m}')">+ ${m}</span>`).join("")}</div>` : ""}
+      ${open && missing.length ? `<div class="chips">${missing.map(m => `<span class="chip" onclick="addDayPerson('${m}')">+ ${m}</span>`).join("")}</div>` : ""}
     </div>
     <div class="card"><div class="person"><div class="nm">Các khoản chi</div><div class="sum">${fmt(total)}</div></div>
-      ${items.length ? items.map(it => itemRow(it, people, open, id)).join("") : `<div class="hint">Chưa có khoản chi nào. Mỗi người tự nhập khoản mình đã chi ở bên dưới.</div>`}
+      ${items.length ? items.map(it => itemRow(it, people, open, id)).join("") : `<div class="hint">Chưa có khoản chi nào.</div>`}
     </div>`;
   if (open) {
     h += itemForm(d);
-    h += `<button class="btn ok block" onclick="closeDay('${id}')" ${items.length ? "" : "disabled style='opacity:.5'"}>${IC.check} Kết sổ chia tiền</button>
-      <div class="hint" style="text-align:center">Khi mọi người đã nhập xong, một người đại diện bấm nút này để xem ai chuyển cho ai.</div>`;
+    h += `<button class="btn ok block" onclick="closeDay('${id}')" ${items.length ? "" : "disabled style='opacity:.5'"}>${IC.check} Kết sổ chia tiền</button>`;
   } else {
     h += resultView(d, id);
     h += `<div class="actions"><button class="btn line" onclick="reopenDay('${id}')">Mở lại sổ để sửa</button></div>`;
@@ -466,20 +465,17 @@ function itemForm(d){
     <div class="muted" style="margin-bottom:6px">Người chi</div>
     <select onchange="itemDraft.payer=this.value">${people.map(p => `<option value="${esc(p)}" ${f.payer === p ? "selected" : ""}>${esc(p)}</option>`).join("")}</select>
     <div style="height:8px"></div>
-    <input type="text" placeholder="Khoản chi, vd Hadilao" value="${esc(f.name)}" oninput="itemDraft.name=this.value">
+    <input type="text" placeholder="Khoản chi" value="${esc(f.name)}" oninput="itemDraft.name=this.value">
     <div style="height:8px"></div>
-    <input type="text" class="amount-in" placeholder="Số tiền, vd 1757k" value="${esc(f.amount)}" oninput="itemDraft.amount=this.value;updateItemPreview()">
+    <input type="text" class="amount-in" placeholder="Số tiền" value="${esc(f.amount)}" oninput="itemDraft.amount=this.value;updateItemPreview()">
     <div class="sec">Chia cho ai?</div>
     <div class="seg">
       <button class="${f.mode==="all"?"on":""}" onclick="setItemMode('all')">Tất cả</button>
       <button class="${f.mode==="some"?"on":""}" onclick="setItemMode('some')">Một số người</button>
       <button class="${f.mode==="custom"?"on":""}" onclick="setItemMode('custom')">Nhập tay</button>
     </div>
-    ${f.mode === "all" ? `<div class="hint" style="margin:0 0 8px">Chia đều cho tất cả ${people.length} người trong sổ.</div>` : ""}
-    ${f.mode === "some" ? `<div class="hint" style="margin:0 0 8px"><b>Rule đặc biệt:</b> chỉ chia đều cho những người được chọn (vd Hadilao chỉ tính cho người đi).</div>
-      <div class="chips">${people.map(p => `<span class="chip ${f.sel[p] ? "on" : ""}" onclick="toggleItemSel('${p}')">${avatar(p,"sm")}${esc(p)}</span>`).join("")}</div>` : ""}
-    ${f.mode === "custom" ? `<div class="hint" style="margin:0 0 8px"><b>Rule đặc biệt:</b> nhập số tiền riêng cho từng người, tổng phải bằng tổng tiền. Để trống người nào không dùng.</div>
-      ${people.map(p => `<div class="row">${avatar(p,"sm")}<span style="flex:1;font-weight:600">${esc(p)}</span><input type="text" placeholder="vd 50k" value="${esc(f.custom[p] || "")}" oninput="itemDraft.custom['${p}']=this.value;updateItemPreview()"></div>`).join("")}` : ""}
+    ${f.mode === "some" ? `<div class="chips">${people.map(p => `<span class="chip ${f.sel[p] ? "on" : ""}" onclick="toggleItemSel('${p}')">${avatar(p,"sm")}${esc(p)}</span>`).join("")}</div>` : ""}
+    ${f.mode === "custom" ? `${people.map(p => `<div class="row">${avatar(p,"sm")}<span style="flex:1;font-weight:600">${esc(p)}</span><input type="text" placeholder="Số tiền" value="${esc(f.custom[p] || "")}" oninput="itemDraft.custom['${p}']=this.value;updateItemPreview()"></div>`).join("")}` : ""}
     <div class="preview" id="ipreview">${itemPreviewText(d)}</div>
     <button class="btn block" onclick="submitItem('${curDay}')">${IC.plus} Thêm khoản chi</button></div>`;
 }
@@ -531,7 +527,7 @@ function resultView(d, id){
     <table class="tbl"><tr><th>Người</th><th>Đã chi</th><th>Phải chịu</th><th>Chênh lệch</th></tr>
       ${r.rows.map(x => `<tr><td>${esc(x.name)}</td><td>${fmt(x.paid)}</td><td>${fmt(x.owe)}</td>
         <td class="${x.net > 0 ? "recv" : x.net < 0 ? "total" : ""}"><b>${x.net > 0 ? "+" : x.net < 0 ? "−" : ""}${fmt(Math.abs(x.net))}</b></td></tr>`).join("")}</table>
-    <div class="hint">Chênh lệch dương: được nhận lại. Âm: phải chuyển đi.</div></div>
+</div>
     <div class="card"><div class="person"><div class="nm">Ai chuyển cho ai</div></div>
       ${xs.length ? xs.map(x => `<div class="xfer">${avatar(x.from,"sm")}<b>${esc(x.from)}</b><span class="arrow">${IC.swap}</span>${avatar(x.to,"sm")}<b>${esc(x.to)}</b><span class="amt">${fmt(x.a)}</span></div>`).join("") : `<div class="hint">Không ai phải chuyển cho ai.</div>`}
       <label class="chk" style="margin-top:12px"><input type="checkbox" ${dayRound ? "checked" : ""} onchange="setRound(this.checked)"> Làm tròn mỗi lần chuyển đến nghìn đồng</label></div>
@@ -601,11 +597,11 @@ function drawContent(){
   $("content").innerHTML = !me ? daysView() : tab === "owed" ? owedView() : tab === "owe" ? oweView() : tab === "notif" ? notifView() : tab === "days" ? daysView() : addView();
 }
 function pickView(){
-  return `<div class="pick"><div class="logo">💸</div><h1>Chia tiền nhóm</h1><div class="muted">Chọn tên để xem các khoản nợ của bạn</div>
+  return `<div class="pick"><div class="logo">💸</div><h1>Chia tiền nhóm</h1>
     ${useFirebase ? "" : `<div class="banner">Chế độ chạy thử: chưa cấu hình Firebase.</div>`}
     <div class="names">${MEMBERS.map(n => `<button class="name" onclick="pick('${n}')">${avatar(n,"lg")}${n}</button>`).join("")}</div>
     <div class="card daybox"><div class="person"><div class="nico offset">${IC.swap}</div>
-      <div class="nm" style="text-align:left"><b>Chia tiền theo ngày</b><div class="muted">Cả nhóm nhập khoản chi, một người bấm "Kết sổ" để xem ai chuyển cho ai</div></div></div>
+      <div class="nm" style="text-align:left"><b>Chia tiền theo ngày</b></div></div>
       <button class="btn block" style="margin-top:12px" onclick="openDays()">Mở sổ chia tiền</button></div></div>`;
 }
 function emptyView(text){ return `<div class="card empty"><div class="big">🎉</div><div>${text}</div></div>`; }
@@ -624,7 +620,7 @@ function owedView(){
         <input type="checkbox" title="Đã trả khoản này" onchange="markPaid('${id}')">
         <div class="info"><div>${esc(d.note || "(không ghi chú)")}</div><div class="muted">${new Date(d.createdAt).toLocaleDateString("vi-VN")}</div></div>
         <div class="amt">${fmt(d.amount)}</div></div>`).join("")}
-      <div class="hint">Tick ô vuông để xoá riêng từng khoản.</div></details></div>`;
+</details></div>`;
   }).join("");
 }
 function oweView(){
@@ -637,7 +633,7 @@ function oweView(){
       ${g[n].map(([,d]) => `<div class="debt">
         <div class="info"><div>${esc(d.note || "(không ghi chú)")}</div><div class="muted">${new Date(d.createdAt).toLocaleDateString("vi-VN")}</div></div>
         <div class="amt">${fmt(d.amount)}</div></div>`).join("")}
-      <div class="hint">${esc(n)} sẽ xác nhận khi nhận được tiền.</div></details></div>`;
+</details></div>`;
   }).join("");
 }
 function notifView(){
@@ -654,9 +650,9 @@ function addView(){
   const d = draft, picked = MEMBERS.filter(n => d.sel[n]);
   return `<div class="card">
     <div class="person" style="margin-bottom:14px">${avatar(me,"sm")}<span class="nm">${esc(me)} <span class="muted">là người trả tiền</span></span></div>
-    <input type="text" class="amount-in" id="amount" placeholder="Tổng tiền, vd 120k" value="${esc(d.amount)}" oninput="onAmount(this.value)">
+    <input type="text" class="amount-in" id="amount" placeholder="Tổng tiền" value="${esc(d.amount)}" oninput="onAmount(this.value)">
     <div style="height:8px"></div>
-    <input type="text" id="note" placeholder="Ghi chú, vd ăn trưa" value="${esc(d.note)}" oninput="draft.note=this.value">
+    <input type="text" id="note" placeholder="Ghi chú" value="${esc(d.note)}" oninput="draft.note=this.value">
     <div class="sec">Chia cho ai <span style="text-transform:none;letter-spacing:0;font-weight:400">(tick cả bạn nếu bạn cũng có phần)</span></div>
     <div class="grid">${MEMBERS.map(n => `<label class="chk"><input type="checkbox" ${d.sel[n]?"checked":""} onchange="toggleSel('${n}',this.checked)"> ${n}${n===me?" (tôi)":""}</label>`).join("")}</div>
     <div class="seg">
@@ -664,7 +660,7 @@ function addView(){
       <button class="${d.mode==="custom"?"on":""}" onclick="setMode('custom')">Tự nhập từng người</button>
     </div>
     ${d.mode==="custom" ? picked.map(n => `<div class="row">${avatar(n,"sm")}<span style="flex:1;font-weight:500">${n}</span>
-      <input type="text" placeholder="vd 50k" value="${esc(d.custom[n]||"")}" oninput="onCustom('${n}',this.value)"></div>`).join("") : ""}
+      <input type="text" placeholder="Số tiền" value="${esc(d.custom[n]||"")}" oninput="onCustom('${n}',this.value)"></div>`).join("") : ""}
     <div class="preview" id="preview">${previewText()}</div>
     <button class="btn block" onclick="submitSplit()">Lưu khoản chia</button>
   </div>`;
@@ -723,7 +719,7 @@ function settleAll(name){
 function settlePartial(name){
   const list = mine("creditor").filter(([,d]) => d.debtor === name);
   const sum = list.reduce((s,[,d]) => s + d.amount, 0);
-  const v = prompt(`${name} đang nợ ${fmt(sum)}. Nhập số tiền đã nhận (vd 50k):`);
+  const v = prompt(`${name} đang nợ ${fmt(sum)}. Nhập số tiền đã nhận:`);
   if (v === null) return;
   const paid = parseMoney(v); let left = paid;
   if (!paid) { alert("Số tiền không hợp lệ."); return; }
