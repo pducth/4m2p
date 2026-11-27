@@ -112,6 +112,34 @@
   button.name{background:var(--card);color:var(--text);border:0;border-radius:20px;box-shadow:var(--shadow);padding:20px 10px;display:flex;flex-direction:column;align-items:center;gap:12px;font:700 16px system-ui,sans-serif;cursor:pointer;transition:transform .1s}
   button.name:active{transform:scale(.97)}
 
+  .tabs button{padding:11px 2px;font-size:13.5px}
+  .daybox{margin-top:22px;text-align:left}
+  .daycard{cursor:pointer}
+  .pill{display:inline-block;font-size:12px;font-weight:700;border-radius:20px;padding:3px 10px;white-space:nowrap}
+  .pill.open{background:rgba(255,138,31,.16);color:var(--acc2)}
+  .pill.closed{background:rgba(18,185,129,.16);color:var(--ok)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:24px;background:var(--bg);border:2px solid var(--line);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+  .chip.on{border-color:var(--acc);background:rgba(255,138,31,.12)}
+  .chip.static{cursor:default;padding-right:8px}
+  .chip .x{background:none;border:0;color:var(--muted);cursor:pointer;padding:0;display:grid;place-items:center}
+  .chip .x svg{width:16px;height:16px}
+  select,input[type=date]{width:100%;font:inherit;padding:13px 14px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--text);outline:none}
+  select:focus,input[type=date]:focus{border-color:var(--acc)}
+  .itemrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+  .itemrow .info{flex:1;min-width:0}
+  .itemrow .amt{font-weight:700;white-space:nowrap}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+  .tbl th{font-size:12px;color:var(--muted);font-weight:600;padding:6px 4px;text-align:right}
+  .tbl td{padding:10px 4px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+  .tbl th:first-child,.tbl td:first-child{text-align:left;white-space:normal}
+  .xfer{display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+  .xfer .arrow{color:var(--acc2);display:grid}
+  .xfer .amt{margin-left:auto;font-weight:800}
+  .btn:disabled{cursor:not-allowed}
+  .stbar{display:flex;align-items:center;gap:12px;padding:16px 0 8px}
+  .stt{font-weight:800;font-size:18px}
+  .ghostbtn.dark{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
   .banner{background:rgba(255,138,31,.14);color:var(--text);border-radius:14px;padding:10px 12px;font-size:13.5px;margin:14px 0}
   #toasts{position:fixed;top:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;pointer-events:none}
   .toast{max-width:420px;margin:0 16px;background:#10224a;border-left:4px solid var(--acc);color:#fff;padding:12px 16px;border-radius:16px;font-size:14.5px;box-shadow:0 12px 32px rgba(0,0,0,.3);animation:in .25s ease}
@@ -138,7 +166,8 @@ const MEMBERS = ["Thiện", "Phúc", "Quyền", "Linh", "Anh", "Thụy"];
 
 const useFirebase = !!firebaseConfig.databaseURL;
 const $ = id => document.getElementById(id);
-let debts = {}, notifs = {}, me = null, tab = "owed", draft = null, seen = null;
+let debts = {}, notifs = {}, days = {}, me = null, tab = "owed", draft = null, seen = null;
+let standalone = false, dayScreen = "list", curDay = null, newDay = null, itemDraft = null, dayRound = true;
 try { me = localStorage.getItem("me"); } catch (e) {}
 if (!MEMBERS.includes(me)) me = null;
 
@@ -154,10 +183,10 @@ const IC = {
 };
 
 /* ---------- Lưu trữ ---------- */
-function localLoad(){ try { const s = JSON.parse(localStorage.getItem("store") || "{}"); debts = s.debts || {}; notifs = s.notifs || {}; } catch(e){} }
-function localSave(){ try { localStorage.setItem("store", JSON.stringify({debts, notifs})); } catch(e){} }
+function localLoad(){ try { const s = JSON.parse(localStorage.getItem("store") || "{}"); debts = s.debts || {}; notifs = s.notifs || {}; days = s.days || {}; } catch(e){} }
+function localSave(){ try { localStorage.setItem("store", JSON.stringify({debts, notifs, days})); } catch(e){} }
 function setPath(parts, v){
-  let o = parts[0] === "debts" ? debts : notifs;
+  let o = parts[0] === "debts" ? debts : parts[0] === "days" ? days : notifs;
   for (let i = 1; i < parts.length - 1; i++) o = o[parts[i]] = o[parts[i]] || {};
   const k = parts[parts.length - 1];
   if (v === null) delete o[k]; else o[k] = v;
@@ -166,7 +195,7 @@ function setPath(parts, v){
 function commit(updates){
   if (useFirebase) {
     return firebase.database().ref().update(updates).catch(e =>
-      alert("Không lưu được: " + e.message + "\nKiểm tra rules Firebase đã có nhánh debts và notifs chưa (xem README)."));
+      alert("Không lưu được: " + e.message + "\nKiểm tra rules Firebase đã có nhánh debts, notifs và days chưa (xem README)."));
   }
   Object.entries(updates).forEach(([p,v]) => setPath(p.split("/"), v));
   localSave(); refresh();
@@ -176,6 +205,7 @@ if (useFirebase) {
   const rdb = firebase.database();
   rdb.ref("debts").on("value", s => { debts = s.val() || {}; refresh(); });
   rdb.ref("notifs").on("value", s => { notifs = s.val() || {}; checkToasts(); refresh(); });
+  rdb.ref("days").on("value", s => { days = s.val() || {}; refresh(); });
 } else localLoad();
 
 /* ---------- Tiện ích ---------- */
@@ -265,18 +295,282 @@ function netPair(A, B, work, updates){
   notify(updates, B, `Gạt nợ với ${A}: bù trừ ${fmt(off)}. ` + (net > 0 ? `Bạn còn nợ ${A} ${fmt(net)}.` : net < 0 ? `${A} còn nợ bạn ${fmt(-net)}.` : "Hai bạn không còn nợ nhau."), "offset");
 }
 
+/* ---------- Chia tiền theo ngày ---------- */
+const toArr = v => Array.isArray(v) ? v.filter(x => x != null) : Object.values(v || {});
+const dayPeople = d => toArr(d.people);
+const dayItems = d => Object.entries(d.items || {}).map(([id,it]) => ({id, ...it})).sort((a,b) => a.createdAt - b.createdAt);
+const todayISO = () => { const t = new Date(); return t.getFullYear() + "-" + String(t.getMonth()+1).padStart(2,"0") + "-" + String(t.getDate()).padStart(2,"0"); };
+const fmtDate = iso => iso ? iso.split("-").reverse().join("/") : "";
+const xAmt = x => dayRound ? Math.round(x.amount / 1000) * 1000 : x.amount;
+const isSpecial = it => it.mode === "custom" || !it.all;
+
+// Phần mỗi người chịu của 1 khoản (số nguyên đồng, số dư chia dần cho người đầu danh sách)
+function itemShares(it, people){
+  const out = {};
+  if (it.mode === "custom") { Object.entries(it.shares || {}).forEach(([p,v]) => out[p] = v); return out; }
+  const list = (it.all ? people : toArr(it.people)).filter(p => people.includes(p));
+  const k = list.length; if (!k) return out;
+  const base = Math.floor(it.amount / k); let rem = it.amount - base * k;
+  list.forEach(p => { out[p] = base + (rem-- > 0 ? 1 : 0); });
+  return out;
+}
+function settleDay(day){
+  const people = dayPeople(day), items = dayItems(day), paid = {}, owe = {};
+  people.forEach(p => { paid[p] = 0; owe[p] = 0; });
+  let total = 0;
+  items.forEach(it => {
+    paid[it.payer] = (paid[it.payer] || 0) + it.amount; total += it.amount;
+    Object.entries(itemShares(it, people)).forEach(([p,v]) => owe[p] = (owe[p] || 0) + v);
+  });
+  const rows = people.map(p => ({name: p, paid: paid[p] || 0, owe: owe[p] || 0, net: (paid[p] || 0) - (owe[p] || 0)}));
+  const cred = rows.filter(r => r.net > 0).map(r => ({n: r.name, v: r.net})).sort((a,b) => b.v - a.v);
+  const debt = rows.filter(r => r.net < 0).map(r => ({n: r.name, v: -r.net})).sort((a,b) => b.v - a.v);
+  const xfers = []; let i = 0, j = 0;
+  while (i < debt.length && j < cred.length) {
+    const v = Math.min(debt[i].v, cred[j].v);
+    if (v > 0) xfers.push({from: debt[i].n, to: cred[j].n, amount: v});
+    debt[i].v -= v; cred[j].v -= v;
+    if (debt[i].v === 0) i++;
+    if (cred[j].v === 0) j++;
+  }
+  return {rows, xfers, total, items, people};
+}
+
+function daysView(){ return dayScreen === "detail" && days[curDay] ? dayDetail(curDay) : dayList(); }
+function openDays(){ standalone = true; dayScreen = "list"; render(); }
+function leaveDays(){ standalone = false; curDay = null; newDay = null; render(); }
+function openDay(id){ curDay = id; dayScreen = "detail"; itemDraft = null; drawContent(); }
+function backToList(){ dayScreen = "list"; curDay = null; itemDraft = null; drawContent(); }
+
+function dayList(){
+  const list = Object.entries(days).map(([id,d]) => ({id, ...d}))
+    .sort((a,b) => (b.date || "").localeCompare(a.date || "") || b.createdAt - a.createdAt);
+  let html = newDay ? newDayForm() : `<button class="btn block" onclick="startNewDay()">${IC.plus} Tạo sổ ngày mới</button>`;
+  if (!list.length) html += `<div class="card empty"><div class="big">🧾</div><div>Chưa có sổ nào. Tạo sổ ngày mới để cả nhóm cùng nhập khoản chi.</div></div>`;
+  html += list.map(d => {
+    const its = dayItems(d), total = its.reduce((s,i) => s + i.amount, 0), closed = d.status === "closed";
+    return `<div class="card daycard" onclick="openDay('${d.id}')"><div class="person">
+      <div class="nm">${esc(d.title || "Sổ chia tiền")}<div class="muted">${fmtDate(d.date)} · ${dayPeople(d).length} người · ${its.length} khoản · ${fmt(total)}</div></div>
+      <span class="pill ${closed ? "closed" : "open"}">${closed ? "Đã kết sổ" : "Đang mở"}</span></div></div>`;
+  }).join("");
+  return html;
+}
+function startNewDay(){ newDay = {title: "", date: todayISO(), people: MEMBERS.slice()}; drawContent(); }
+function cancelNewDay(){ newDay = null; drawContent(); }
+function toggleNewPerson(p){
+  const a = newDay.people, i = a.indexOf(p);
+  if (i >= 0) a.splice(i, 1); else a.push(p);
+  drawContent();
+}
+function newDayForm(){
+  const n = newDay, all = MEMBERS;
+  return `<div class="card"><div class="sec" style="margin-top:0">Sổ mới</div>
+    <input type="text" placeholder="Tên sổ (không bắt buộc), vd Đi Vũng Tàu" value="${esc(n.title)}" oninput="newDay.title=this.value">
+    <div style="height:8px"></div>
+    <input type="date" value="${n.date}" onchange="newDay.date=this.value">
+    <div class="sec">Ai tham gia?</div>
+    <div class="chips">${all.map(p => `<span class="chip ${n.people.includes(p) ? "on" : ""}" onclick="toggleNewPerson('${p}')">${avatar(p,"sm")}${esc(p)}</span>`).join("")}</div>
+    <div class="actions"><button class="btn line" onclick="cancelNewDay()">Huỷ</button><button class="btn" onclick="createDay()">Tạo sổ</button></div></div>`;
+}
+function createDay(){
+  const n = newDay;
+  if (n.people.length < 2) { alert("Cần ít nhất 2 người tham gia."); return; }
+  const id = uid(), date = n.date || todayISO();
+  const d = {title: n.title.trim() || ("Ngày " + fmtDate(date).slice(0, 5)), date, status: "open", people: n.people.slice(), createdAt: Date.now()};
+  if (me) d.createdBy = me;
+  newDay = null; curDay = id; dayScreen = "detail"; itemDraft = null;
+  commit({[`days/${id}`]: d});
+  drawContent();
+}
+
+function dayDetail(id){
+  const d = days[id], people = dayPeople(d), items = dayItems(d), open = d.status !== "closed";
+  const total = items.reduce((s,i) => s + i.amount, 0);
+  const missing = MEMBERS.filter(m => !people.includes(m));
+  let h = `<button class="linkbtn" onclick="backToList()">← Danh sách sổ</button>
+    <div class="card"><div class="person"><div class="nm"><div style="font-size:19px;font-weight:800">${esc(d.title)}</div><div class="muted">${fmtDate(d.date)}</div></div>
+      <span class="pill ${open ? "open" : "closed"}">${open ? "Đang mở" : "Đã kết sổ"}</span></div>
+      <div class="sec">Người tham gia (${people.length})</div>
+      <div class="chips">${people.map(p => `<span class="chip static">${avatar(p,"sm")}${esc(p)}${open ? `<button class="x" onclick="removeDayPerson('${p}')" aria-label="Bỏ ${esc(p)}">${IC.x}</button>` : ""}</span>`).join("")}</div>
+      ${open && missing.length ? `<div class="muted">Thêm lại người vừa bỏ:</div><div class="chips">${missing.map(m => `<span class="chip" onclick="addDayPerson('${m}')">+ ${m}</span>`).join("")}</div>` : ""}
+    </div>
+    <div class="card"><div class="person"><div class="nm">Các khoản chi</div><div class="sum">${fmt(total)}</div></div>
+      ${items.length ? items.map(it => itemRow(it, people, open, id)).join("") : `<div class="hint">Chưa có khoản chi nào. Mỗi người tự nhập khoản mình đã chi ở bên dưới.</div>`}
+    </div>`;
+  if (open) {
+    h += itemForm(d);
+    h += `<button class="btn ok block" onclick="closeDay('${id}')" ${items.length ? "" : "disabled style='opacity:.5'"}>${IC.check} Kết sổ chia tiền</button>
+      <div class="hint" style="text-align:center">Khi mọi người đã nhập xong, một người đại diện bấm nút này để xem ai chuyển cho ai.</div>`;
+  } else {
+    h += resultView(d, id);
+    h += `<div class="actions"><button class="btn line" onclick="reopenDay('${id}')">Mở lại sổ để sửa</button></div>`;
+  }
+  h += `<div style="text-align:center;margin-top:10px"><button class="linkbtn" style="color:var(--bad)" onclick="deleteDay('${id}')">Xoá sổ này</button></div>`;
+  return h;
+}
+function itemRow(it, people, open, id){
+  const who = it.mode === "custom" ? "Nhập tay từng người" : it.all ? `Tất cả (${people.length} người)` : toArr(it.people).join(", ");
+  return `<div class="itemrow"><div class="info"><div><b>${esc(it.name || "Khoản chi")}</b> ${isSpecial(it) ? `<span class="pill open">Rule riêng</span>` : ""}</div>
+    <div class="muted">${esc(it.payer)} chi · chia cho: ${esc(who)}</div></div>
+    <div class="amt">${fmt(it.amount)}</div>
+    ${open ? `<button class="x" style="background:none;border:0;color:var(--muted);cursor:pointer" onclick="delItem('${id}','${it.id}')" aria-label="Xoá khoản">${IC.x}</button>` : ""}</div>`;
+}
+function delItem(id, itemId){
+  const it = (days[id].items || {})[itemId];
+  if (it && confirm(`Xoá khoản "${it.name}" (${fmt(it.amount)})?`)) commit({[`days/${id}/items/${itemId}`]: null});
+}
+function addDayPerson(name){
+  const d = days[curDay], people = dayPeople(d);
+  if (!MEMBERS.includes(name) || people.includes(name)) return;
+  commit({[`days/${curDay}/people`]: [...people, name]});
+}
+function removeDayPerson(name){
+  const d = days[curDay], people = dayPeople(d);
+  const used = dayItems(d).some(it => it.payer === name || (it.mode === "custom" && (it.shares || {})[name]) || (it.mode !== "custom" && !it.all && toArr(it.people).includes(name)));
+  if (used) { alert(`${name} đang có trong khoản chi, hãy xoá khoản đó trước.`); return; }
+  if (people.length <= 2) { alert("Cần ít nhất 2 người."); return; }
+  commit({[`days/${curDay}/people`]: people.filter(p => p !== name)});
+}
+
+/* --- Form thêm khoản chi --- */
+function newItemDraft(people){ return {payer: people.includes(me) ? me : people[0], name: "", amount: "", mode: "all", sel: {}, custom: {}}; }
+function itemCalc(d){
+  const f = itemDraft, people = dayPeople(d); let amount = parseMoney(f.amount), shares = {}, sel = [];
+  if (f.mode === "all") {
+    shares = itemShares({amount, mode: "equal", all: true}, people);
+    return {ok: amount > 0, amount, shares, msg: amount ? "" : "Nhập số tiền."};
+  }
+  if (f.mode === "some") {
+    sel = people.filter(p => f.sel[p]);
+    if (!sel.length) return {ok: false, amount, shares, sel, msg: "Chọn những người được chia khoản này."};
+    shares = itemShares({amount, mode: "equal", all: false, people: sel}, people);
+    return {ok: amount > 0, amount, shares, sel, msg: amount ? "" : "Nhập số tiền."};
+  }
+  people.forEach(p => { const v = parseMoney(f.custom[p] || ""); if (v > 0) shares[p] = v; });
+  const sum = Object.values(shares).reduce((a,b) => a + b, 0);
+  if (!sum) return {ok: false, amount, shares, msg: "Nhập số tiền cho từng người."};
+  if (amount && sum !== amount) return {ok: false, amount, shares, msg: `Tổng từng người ${fmt(sum)} ≠ tổng tiền ${fmt(amount)} (lệch ${fmt(Math.abs(amount - sum))}).`};
+  return {ok: true, amount: sum, shares, msg: ""};
+}
+function itemPreviewText(d){
+  const c = itemCalc(d);
+  return (Object.entries(c.shares).map(([n,v]) => `${esc(n)}: ${fmt(v)}`).join(" · ") || "Chưa có phần chia.") + (c.msg ? `<br><span class="warn">${c.msg}</span>` : "");
+}
+function updateItemPreview(){ const p = $("ipreview"); if (p && days[curDay]) p.innerHTML = itemPreviewText(days[curDay]); }
+function itemForm(d){
+  const people = dayPeople(d);
+  if (!itemDraft) itemDraft = newItemDraft(people);
+  if (!people.includes(itemDraft.payer)) itemDraft.payer = people[0];
+  const f = itemDraft;
+  return `<div class="card"><div class="sec" style="margin-top:0">Thêm khoản chi</div>
+    <div class="muted" style="margin-bottom:6px">Người chi</div>
+    <select onchange="itemDraft.payer=this.value">${people.map(p => `<option value="${esc(p)}" ${f.payer === p ? "selected" : ""}>${esc(p)}</option>`).join("")}</select>
+    <div style="height:8px"></div>
+    <input type="text" placeholder="Khoản chi, vd Hadilao" value="${esc(f.name)}" oninput="itemDraft.name=this.value">
+    <div style="height:8px"></div>
+    <input type="text" class="amount-in" placeholder="Số tiền, vd 1757k" value="${esc(f.amount)}" oninput="itemDraft.amount=this.value;updateItemPreview()">
+    <div class="sec">Chia cho ai?</div>
+    <div class="seg">
+      <button class="${f.mode==="all"?"on":""}" onclick="setItemMode('all')">Tất cả</button>
+      <button class="${f.mode==="some"?"on":""}" onclick="setItemMode('some')">Một số người</button>
+      <button class="${f.mode==="custom"?"on":""}" onclick="setItemMode('custom')">Nhập tay</button>
+    </div>
+    ${f.mode === "all" ? `<div class="hint" style="margin:0 0 8px">Chia đều cho tất cả ${people.length} người trong sổ.</div>` : ""}
+    ${f.mode === "some" ? `<div class="hint" style="margin:0 0 8px"><b>Rule đặc biệt:</b> chỉ chia đều cho những người được chọn (vd Hadilao chỉ tính cho người đi).</div>
+      <div class="chips">${people.map(p => `<span class="chip ${f.sel[p] ? "on" : ""}" onclick="toggleItemSel('${p}')">${avatar(p,"sm")}${esc(p)}</span>`).join("")}</div>` : ""}
+    ${f.mode === "custom" ? `<div class="hint" style="margin:0 0 8px"><b>Rule đặc biệt:</b> nhập số tiền riêng cho từng người, tổng phải bằng tổng tiền. Để trống người nào không dùng.</div>
+      ${people.map(p => `<div class="row">${avatar(p,"sm")}<span style="flex:1;font-weight:600">${esc(p)}</span><input type="text" placeholder="vd 50k" value="${esc(f.custom[p] || "")}" oninput="itemDraft.custom['${p}']=this.value;updateItemPreview()"></div>`).join("")}` : ""}
+    <div class="preview" id="ipreview">${itemPreviewText(d)}</div>
+    <button class="btn block" onclick="submitItem('${curDay}')">${IC.plus} Thêm khoản chi</button></div>`;
+}
+function setItemMode(m){ itemDraft.mode = m; drawContent(); }
+function toggleItemSel(p){ itemDraft.sel[p] = !itemDraft.sel[p]; drawContent(); }
+function submitItem(id){
+  const d = days[id], c = itemCalc(d), f = itemDraft;
+  if (!c.ok) { alert(c.msg || "Thông tin chưa đủ."); return; }
+  const item = {payer: f.payer, name: f.name.trim() || "Khoản chi", amount: c.amount, createdAt: Date.now()};
+  if (me) item.by = me;
+  if (f.mode === "all") { item.mode = "equal"; item.all = true; }
+  else if (f.mode === "some") { item.mode = "equal"; item.all = false; item.people = c.sel; }
+  else { item.mode = "custom"; item.all = false; item.shares = c.shares; }
+  itemDraft = newItemDraft(dayPeople(d)); itemDraft.payer = f.payer;
+  commit({[`days/${id}/items/${uid()}`]: item});
+  drawContent();
+}
+
+/* --- Kết sổ & kết quả --- */
+function closeDay(id){
+  const d = days[id];
+  if (!dayItems(d).length) { alert("Chưa có khoản chi nào."); return; }
+  if (!confirm("Kết sổ chia tiền? Mọi người sẽ thấy kết quả ai chuyển cho ai. Bạn vẫn có thể mở lại sổ để sửa.")) return;
+  const r = settleDay(d), u = {};
+  u[`days/${id}/status`] = "closed"; u[`days/${id}/closedAt`] = Date.now();
+  if (me) u[`days/${id}/closedBy`] = me;
+  r.xfers.forEach(x => {
+    const a = xAmt(x); if (!a) return;
+    if (MEMBERS.includes(x.from)) notify(u, x.from, `Kết sổ "${d.title}": bạn cần chuyển ${x.to} ${fmt(a)}.`, "offset");
+    if (MEMBERS.includes(x.to)) notify(u, x.to, `Kết sổ "${d.title}": ${x.from} sẽ chuyển cho bạn ${fmt(a)}.`, "new");
+  });
+  commit(u);
+}
+function reopenDay(id){
+  if (!confirm("Mở lại sổ để sửa? Kết quả cũ sẽ ẩn đi cho đến khi kết sổ lại.")) return;
+  commit({[`days/${id}/status`]: "open", [`days/${id}/closedAt`]: null, [`days/${id}/closedBy`]: null});
+}
+function deleteDay(id){
+  if (!confirm(`Xoá hẳn sổ "${days[id].title}" cùng toàn bộ khoản chi?`)) return;
+  backToList(); commit({[`days/${id}`]: null});
+}
+function setRound(v){ dayRound = v; drawContent(); }
+function resultView(d, id){
+  const r = settleDay(d), xs = r.xfers.map(x => ({...x, a: xAmt(x)})).filter(x => x.a > 0);
+  const special = r.items.filter(isSpecial);
+  return `<div class="card"><div class="person"><div class="nm">Kết quả kết sổ</div><div class="sum">${fmt(r.total)}</div></div>
+    <div class="muted">Tổng chi cả ngày · ${r.items.length} khoản${d.closedBy ? ` · kết sổ bởi ${esc(d.closedBy)}` : ""}</div>
+    <div class="sec">Phần mỗi người phải chịu</div>
+    <table class="tbl"><tr><th>Người</th><th>Đã chi</th><th>Phải chịu</th><th>Chênh lệch</th></tr>
+      ${r.rows.map(x => `<tr><td>${esc(x.name)}</td><td>${fmt(x.paid)}</td><td>${fmt(x.owe)}</td>
+        <td class="${x.net > 0 ? "recv" : x.net < 0 ? "total" : ""}"><b>${x.net > 0 ? "+" : x.net < 0 ? "−" : ""}${fmt(Math.abs(x.net))}</b></td></tr>`).join("")}</table>
+    <div class="hint">Chênh lệch dương: được nhận lại. Âm: phải chuyển đi.</div></div>
+    <div class="card"><div class="person"><div class="nm">Ai chuyển cho ai</div></div>
+      ${xs.length ? xs.map(x => `<div class="xfer">${avatar(x.from,"sm")}<b>${esc(x.from)}</b><span class="arrow">${IC.swap}</span>${avatar(x.to,"sm")}<b>${esc(x.to)}</b><span class="amt">${fmt(x.a)}</span></div>`).join("") : `<div class="hint">Không ai phải chuyển cho ai.</div>`}
+      <label class="chk" style="margin-top:12px"><input type="checkbox" ${dayRound ? "checked" : ""} onchange="setRound(this.checked)"> Làm tròn mỗi lần chuyển đến nghìn đồng</label></div>
+    ${special.length ? `<div class="card"><div class="person"><div class="nm">Khoản chia theo rule đặc biệt</div></div>
+      ${special.map(it => { const sh = Object.entries(itemShares(it, r.people)); return `<div class="itemrow"><div class="info"><b>${esc(it.name)}</b> <span class="muted">(${fmt(it.amount)}, ${esc(it.payer)} chi)</span>
+        <div class="muted">${sh.map(([p,v]) => `${esc(p)} ${fmt(v)}`).join(" · ")}</div></div></div>`; }).join("")}</div>` : ""}
+    <button class="btn line block" onclick="copyResult('${id}')">Sao chép kết quả để gửi nhóm</button>`;
+}
+function copyResult(id){
+  const d = days[id], r = settleDay(d), xs = r.xfers.map(x => ({...x, a: xAmt(x)})).filter(x => x.a > 0);
+  const text = `Kết sổ: ${d.title} (${fmtDate(d.date)})\nTổng chi: ${fmt(r.total)}\n\nMỗi người phải chịu:\n` +
+    r.rows.map(x => `- ${x.name}: chịu ${fmt(x.owe)}, đã chi ${fmt(x.paid)} → ${x.net > 0 ? "nhận " : x.net < 0 ? "trả " : ""}${fmt(Math.abs(x.net))}`).join("\n") +
+    `\n\nAi chuyển cho ai:\n` + (xs.length ? xs.map(x => `- ${x.from} → ${x.to}: ${fmt(x.a)}`).join("\n") : "- Không ai phải chuyển");
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => toast("Đã sao chép kết quả.")).catch(() => prompt("Sao chép đoạn này:", text));
+}
+
 /* ---------- Giao diện ---------- */
+function typing(){
+  const a = document.activeElement, c = $("content");
+  return !!(a && c && c.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+}
 function render(){
   const app = $("app");
-  if (!me) { app.innerHTML = pickView(); return; }
+  if (!me) {
+    if (standalone) {
+      app.innerHTML = `<div class="stbar"><button class="ghostbtn dark" onclick="leaveDays()">← Chọn tên</button><span class="stt">Chia tiền theo ngày</span></div><div id="content"></div>`;
+      drawContent();
+    } else app.innerHTML = pickView();
+    return;
+  }
   if (!draft) draft = newDraft();
   app.innerHTML = `<div id="hdr"></div><div id="content"></div>`;
   drawHeader(); drawContent();
 }
 function refresh(){
-  if (!me || !$("hdr")) { render(); return; }
+  if (!me) { if (standalone && $("content")) { if (!typing()) drawContent(); } else render(); return; }
+  if (!$("hdr")) { render(); return; }
   drawHeader();
-  if (tab !== "add") drawContent();
+  if (tab !== "add" && !(tab === "days" && typing())) drawContent();
 }
 function drawHeader(){
   const owed = mine("creditor").reduce((s,[,d]) => s + d.amount, 0);
@@ -300,15 +594,19 @@ function drawHeader(){
       <button class="${tab==="owed"?"on":""}" onclick="setTab('owed')">Cần đòi</button>
       <button class="${tab==="owe"?"on":""}" onclick="setTab('owe')">Cần trả</button>
       <button class="${tab==="add"?"on":""}" onclick="setTab('add')">Chia tiền</button>
+      <button class="${tab==="days"?"on":""}" onclick="setTab('days')">Theo ngày</button>
     </div>`;
 }
 function drawContent(){
-  $("content").innerHTML = tab === "owed" ? owedView() : tab === "owe" ? oweView() : tab === "notif" ? notifView() : addView();
+  $("content").innerHTML = !me ? daysView() : tab === "owed" ? owedView() : tab === "owe" ? oweView() : tab === "notif" ? notifView() : tab === "days" ? daysView() : addView();
 }
 function pickView(){
   return `<div class="pick"><div class="logo">💸</div><h1>Chia tiền nhóm</h1><div class="muted">Chọn tên để xem các khoản nợ của bạn</div>
     ${useFirebase ? "" : `<div class="banner">Chế độ chạy thử: chưa cấu hình Firebase.</div>`}
-    <div class="names">${MEMBERS.map(n => `<button class="name" onclick="pick('${n}')">${avatar(n,"lg")}${n}</button>`).join("")}</div></div>`;
+    <div class="names">${MEMBERS.map(n => `<button class="name" onclick="pick('${n}')">${avatar(n,"lg")}${n}</button>`).join("")}</div>
+    <div class="card daybox"><div class="person"><div class="nico offset">${IC.swap}</div>
+      <div class="nm" style="text-align:left"><b>Chia tiền theo ngày</b><div class="muted">Cả nhóm nhập khoản chi, một người bấm "Kết sổ" để xem ai chuyển cho ai</div></div></div>
+      <button class="btn block" style="margin-top:12px" onclick="openDays()">Mở sổ chia tiền</button></div></div>`;
 }
 function emptyView(text){ return `<div class="card empty"><div class="big">🎉</div><div>${text}</div></div>`; }
 function owedView(){
@@ -399,7 +697,7 @@ function previewText(){
 function updatePreview(){ const p = $("preview"); if (p) p.innerHTML = previewText(); }
 
 /* ---------- Hành động ---------- */
-function pick(n){ me = n; seen = null; try { localStorage.setItem("me", n); } catch(e){} tab = "owed"; checkToasts(); render(); }
+function pick(n){ me = n; seen = null; standalone = false; try { localStorage.setItem("me", n); } catch(e){} tab = "owed"; checkToasts(); render(); }
 function switchUser(){ me = null; seen = null; render(); }
 function setTab(t){ tab = t; drawHeader(); drawContent(); }
 function onAmount(v){ draft.amount = v; updatePreview(); }

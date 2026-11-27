@@ -5,9 +5,9 @@ Web 1 file `index.html`, deploy bằng GitHub Pages, dữ liệu lưu bằng Fir
 ## 1. Tạo Firebase
 1. Vào https://console.firebase.google.com → **Add project** (tắt Analytics cũng được).
 2. Menu **Build → Realtime Database → Create database** (chọn vùng Singapore), chọn **Start in test mode**.
-3. Tab **Rules**, dán rồi Publish (cho phép đọc/ghi ở nhánh `debts` và `notifs`):
+3. Tab **Rules**, dán rồi Publish (cho phép đọc/ghi ở nhánh `debts`, `notifs` và `days`):
    ```json
-   { "rules": { "debts": { ".read": true, ".write": true }, "notifs": { ".read": true, ".write": true } } }
+   { "rules": { "debts": { ".read": true, ".write": true }, "notifs": { ".read": true, ".write": true }, "days": { ".read": true, ".write": true } } }
    ```
 4. **Project settings (⚙) → General → Your apps → Web (</>)** → đăng ký app → copy object `firebaseConfig`.
 5. Mở `index.html`, dán các giá trị vào `firebaseConfig` (nhớ có `databaseURL`).
